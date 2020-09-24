@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 21:53:16 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/24 16:27:33 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/24 19:21:39 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,9 @@
 #define NAME "hardhat"
 //#define NAME "headsup"
 //#define NAME "ahead"
+
+//set this with -t
+#define TAB_SIZE 4
 
 using namespace std;
 
@@ -46,24 +49,39 @@ bool	isUpToDate(Function sfunct, Function hfunct)
 
 bool	isFunction(ifstream& file, string buf, Function& funct)
 {
-	regex	prototype("^([^\\t]+)[\\t]+(.*)\\(([^\\)]*)");
+	regex	prototype("^(?:([^\\t]+)[\\ ]*)[\\t]+([^\\(]+)\\(([^\\(?\\)?]*)\\)?");
 	smatch	prot_res;
 	if (!regex_search(buf, prot_res, prototype))
 		return (false);
 	funct.returnType = prot_res.str(1);
+	if (!funct.returnType.compare(0, 6, "static"))
+		return (false);
 	funct.name = prot_res.str(2);
+	if (funct.name == "main")
+		return (false);
+	cerr << "BUF: " << buf << endl; 
 	string funct_args = prot_res.str(3);
 	string remainder = prot_res.suffix().str();
-	if (!remainder.size())
+	size_t	open_count = count(buf.begin(), buf.end(), '(');
+	size_t	close_count = count(buf.begin(), buf.end(), ')');
+	cerr << "OPEN: " << open_count << " | " << "CLOSE: " << close_count << endl;
+	if (open_count != close_count)
 	{
 		while (getline(file, buf))
 		{
 			funct_args += buf;
-			if (buf.find(')') != string::npos || file.eof())
+			open_count += count(buf.begin(), buf.end(), '(');
+			close_count += count(buf.begin(), buf.end(), ')');
+			if (open_count == close_count || file.eof())
+			{
+				if (open_count == close_count)
+					funct_args.pop_back();
 				break ;
+			}
 		}
 	}
-	regex	arg("[\\t]*([^\\(\\)\\t\\ ,]+\\ +[^\\(\\)\\t\\ ,]+)(?:\\,?[\\ ]*)");
+	cerr << "FUNCT_ARGS: " << funct_args << endl;
+	regex	arg("[\\t]*([^\\(\\)\\t,]+\\ +[^\\t,]+|void)(?:\\,?[\\ ]*)");
 	smatch	arg_res;
 	vector<string>	args;
 	while (regex_search(funct_args, arg_res, arg, regex_constants::match_any))
@@ -94,7 +112,8 @@ void	rewriteHeader(string headerName, vector<Function> missing)
 	for (size_t i = 0; i < contents.size() - 2; i++)
 		write << contents[i] << endl;
 	for (size_t i = 0; i < missing.size(); i++)
-		write << missing[i] << ";\n";
+		write << missing[i] << ";";
+	write << "\n";
 	for (size_t i = contents.size() - 2; i < contents.size() ; i++)
 		write << contents[i] << endl;
 }
@@ -119,7 +138,7 @@ void	readFile(string name, vector<Function>& all)
 
 bool	isPrototype(ifstream& file, string buf, Function& funct)
 {
-	regex	exp("^([^\\t]+)[\\t]+(.*)\\(([^\\)]+)");
+	regex	exp("^([^\\t]+)[\\t]+([^\\(]+)\\(([^\\)]+)");
 	smatch	res;
 
 	if (!regex_search(buf, res, exp))
