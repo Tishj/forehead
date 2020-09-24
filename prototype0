@@ -2,3 +2,9 @@ int			main(int argc, char **argv, char **envp  )
 {
 
 }
+
+
+void		print_nbr(int num)
+{
+
+}
