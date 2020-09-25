@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 21:53:16 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/25 16:20:54 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/25 16:43:32 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ bool	isUpToDate(Function sfunct, Function hfunct)
 
 bool	isFunction(ifstream& file, string buf, Function& funct)
 {
-	regex	prototype("^(?:([^\\t]+)[\\ ]*)[\\t]+([^\\(]+)\\(([^\\(?\\)?]*)\\)?");
+	regex	prototype("^(?:([^\\t]+)[\\ ]*)[\\t]+([^\\(]+)([0-9a-z_\\* ,\\(??\\)??]+)");
 	smatch	prot_res;
 	if (buf.size() <= 10 || buf[0] == '\t' || buf[0] == '/' || buf[0] == '}' || buf[0] == '{' || buf[0] == '#' || buf[0] == '*')
 		return (false);
@@ -88,6 +88,7 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 			}
 		}
 	}
+	funct_args = funct_args.substr(1, funct_args.size() - 2);
 	regex	arg("[\\t]*([^\\(\\)\\t,]+\\ +[^\\t,]+|void)(?:\\,?[\\ ]*)");
 	smatch	arg_res;
 	vector<string>	args;

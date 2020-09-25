@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/25 13:24:14 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/25 16:24:57 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/25 16:43:48 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,6 @@
 
 #include <stddef.h>
 
-typedef t_list void;
-typedef t_pfconv void;
 
 size_t	ft_strrlenrevs(char *str, char rstart, char rend, char *set);
 void	ft_strrev(char *str);
@@ -80,7 +78,7 @@ int	vec_nullterm(t_vec *vec);
 void	*ft_memcpy(void *dst, void *src, size_t len);
 char	*ft_strprefix(char *str, char *prefix);
 size_t	ft_strrlenrev(char *str, char rstart, char rend);
-void	ft_dlstclearright(t_dlist **head, t_dlist *elem, void);
+void	ft_dlstclearright(t_dlist **head, t_dlist *elem, void (*f)(void *item));
 void	ft_lstprefix(t_list **list, t_list *add);
 char	*ft_numstru_base(unsigned int num, char *base, size_t minimum);
 int	ft_printf(char *arguments);
@@ -101,7 +99,7 @@ void	ft_numprintbase(int nb, int base);
 char	*numpadding(char *num, t_pfconv *conv, int len);
 char	*ft_strdupc(char *str, char c);
 int	ft_fdchar(int fd, char *c);
-void	ft_dlstdel(t_dlist **head, t_dlist *del, void);
+void	ft_dlstdel(t_dlist **head, t_dlist *del, void (*f)(void *item));
 size_t	ft_strslenrev(char *str, char *set);
 int	conv_ulong(t_pfdata *data, t_pfconv *conv);
 char	*ft_sprintf(int *ret, char *arguments);
@@ -116,7 +114,7 @@ size_t	ft_strwlens(char *str, char *set);
 char	*ft_strtok(char *str, char *delimiter);
 void	ft_treeaddparent(t_tree **root, t_tree *add);
 void	ft_treeaddchild(t_tree *branch, t_tree *add);
-void	ft_treeprint(t_tree *root, void);
+void	ft_treeprint(t_tree *root, void (*print)(void *item));
 char	*ft_strstr(char *str, char *ndl);
 void	ft_strshift(char *str, long long shift);
 size_t	ft_strwlenrevc(char *str, char c);
@@ -126,7 +124,7 @@ size_t	ft_strskipc(char *str, char c);
 size_t	ft_strslenrevr(char *str, char *set, char rstart, char rend);
 size_t	ft_strwlenc(char *str, char c);
 char	ft_chrmatchw(char c);
-t_tree	*ft_treebfirst(t_tree *root, t_list *queue, void *cmp);
+t_tree	*ft_treebfirst(t_tree *root, int (*f)(void *item, void *cmp), t_list *queue, void *cm);
 void	*ft_pstkpop(t_plist **list);
 int	ft_chrprintfdc(char c, char yes, int fd);
 char	*ft_strsuffix(char *str, char *suffix);
@@ -152,7 +150,7 @@ int	ft_chrcprintfd(char c, char nope, int fd);
 int	vec_new(t_vec *vec, size_t typesize);
 size_t	ft_strwlenrevs(char *str, char *set);
 size_t	ft_strslenrevc(char *str, char *set, char c);
-void	ft_lstprint(t_list *head, void);
+void	ft_lstprint(t_list *head, void (*p)(char *item));
 int	vec_insert(t_vec *vec, void *buff, size_t amount, size_t index);
 size_t	ft_strslenc(char *str, char *set, char c);
 size_t	ft_strslen(char *str, char *set);
@@ -181,12 +179,12 @@ HEAP	*ft_memdup(void *mem, size_t n);
 int	conv_str(t_pfdata *data, t_pfconv *conv);
 size_t	ft_numlen_base(int num, int base);
 char	*ft_strreplace(char *org, char *before, char *after);
-void	ft_str2fmap(char **str, char *);
+void	ft_str2fmap(char **str, char *(*f)(char *str, char *arg), char *arg);
 void	ft_stkpush(t_list **list, void *item);
 long long	ft_absnum(long long nb);
 size_t	ft_strrlens(char *str, char rstart, char rend, char *set);
 int	ft_fdstrc(int fd, char **line, char c);
-char	ft_lstcmp(void *a, void *b);
+char	ft_lstcmp(void *a, void *b, char (*cmp)(void *item1, void *item2));
 void	ft_lstinfix(t_list **list, t_list *add, size_t n);
 void	ft_strreplacec(char *str, char c, char replace);
 char	*ft_strinfix(char *dst, char *add, size_t index);
@@ -201,7 +199,7 @@ char	ft_chrmatchs(char c, char *set);
 void	ft_dlistaddbehind(t_dlist *elem, t_dlist *add);
 char	*ft_numstr_base(int num, int base, size_t minimum);
 void	ft_dlstaddback(t_dlist **head, t_dlist *add);
-void	ft_dlstclear(t_dlist **head, void);
+void	ft_dlstclear(t_dlist **head, void (*f)(void *item));
 HEAP	*ft_lstnew(void *item);
 long long	ft_nummax(long long a, long long b);
 void	ft_strconvu(char *str);
@@ -209,7 +207,7 @@ size_t	ft_strnlenrevr(char *str, long n, char rstart, char rend);
 void	ft_treeaddright(t_tree *branch, t_tree *add);
 HEAP	*ft_dlstnew(void *item, void *prev);
 long long	ft_str2ncmpstr(char **str2, char *str);
-void	ft_dlstclearleft(t_dlist **head, t_dlist *elem, void);
+void	ft_dlstclearleft(t_dlist **head, t_dlist *elem, void (*f)(void *item));
 void	ft_lstrev(t_list **list);
 void	ft_strprint(void *str);
 void	ft_numprint(int nb);
@@ -225,7 +223,7 @@ char	**ft_str2dup(char **str);
 int	ft_strcmp(void *str1, void *str2);
 long long	ft_lstindex(t_list *list, t_list *elem);
 size_t	ft_strslenr(char *str, char *set, char rstart, char rend);
-void	ft_lstdel(t_list **list, t_list *elem, void);
+void	ft_lstdel(t_list **list, t_list *elem, void (*del)(void *item));
 size_t	ft_lstlen(t_list *list);
 void	ft_pquepush(t_plist **list, void *item, int priority);
 int	ft_chrprintfd(char c, int fd);
