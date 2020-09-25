@@ -6,20 +6,17 @@
 #    By: tbruinem <tbruinem@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/09/21 20:31:07 by tbruinem      #+#    #+#                  #
-#    Updated: 2020/09/23 19:13:45 by tbruinem      ########   odam.nl          #
+#    Updated: 2020/09/25 12:04:53 by tbruinem      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
-NAME =		42cpp_helper
+NAME =		hardhat
 SRCDIR =	src
 OBJDIR =	obj
 INCLDIR =	incl
 CXX =		g++
 SRC :=		main \
-			utils \
-			source \
-			Function \
-			header
+			Function
 
 OBJ :=		$(SRC:%=$(OBJDIR)/%.o)
 SRC	:=		$(SRC:%=$(SRCDIR)/%.cpp)

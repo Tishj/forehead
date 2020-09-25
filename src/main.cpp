@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 21:53:16 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/24 19:21:39 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/25 12:28:00 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,8 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 {
 	regex	prototype("^(?:([^\\t]+)[\\ ]*)[\\t]+([^\\(]+)\\(([^\\(?\\)?]*)\\)?");
 	smatch	prot_res;
+	if (buf.size() <= 10 || buf[0] == '\t' || buf[0] == '/' || buf[0] == '}' || buf[0] == '{' || buf[0] == '#')
+		return (false);
 	if (!regex_search(buf, prot_res, prototype))
 		return (false);
 	funct.returnType = prot_res.str(1);
@@ -59,12 +61,10 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 	funct.name = prot_res.str(2);
 	if (funct.name == "main")
 		return (false);
-	cerr << "BUF: " << buf << endl; 
 	string funct_args = prot_res.str(3);
 	string remainder = prot_res.suffix().str();
 	size_t	open_count = count(buf.begin(), buf.end(), '(');
 	size_t	close_count = count(buf.begin(), buf.end(), ')');
-	cerr << "OPEN: " << open_count << " | " << "CLOSE: " << close_count << endl;
 	if (open_count != close_count)
 	{
 		while (getline(file, buf))
@@ -80,7 +80,6 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 			}
 		}
 	}
-	cerr << "FUNCT_ARGS: " << funct_args << endl;
 	regex	arg("[\\t]*([^\\(\\)\\t,]+\\ +[^\\t,]+|void)(?:\\,?[\\ ]*)");
 	smatch	arg_res;
 	vector<string>	args;
@@ -118,7 +117,7 @@ void	rewriteHeader(string headerName, vector<Function> missing)
 		write << contents[i] << endl;
 }
 
-void	readFile(string name, vector<Function>& all)
+void	readFile(string name, unordered_map<string, Function>& all)
 {
 	ifstream			file(name.c_str());
 	string				buf;
@@ -132,8 +131,8 @@ void	readFile(string name, vector<Function>& all)
 		if (file.eof())
 			break ;
 	}
-	all.insert(all.end(), functions.begin(), functions.end());
-	functions.clear();
+	for (size_t i = 0; i < functions.size(); i++)
+		all[functions[i].name] = functions[i];
 }
 
 bool	isPrototype(ifstream& file, string buf, Function& funct)
@@ -143,7 +142,6 @@ bool	isPrototype(ifstream& file, string buf, Function& funct)
 
 	if (!regex_search(buf, res, exp))
 		return (false);
-	cerr << res.str(0) << "\" | \"" << res.str(1) << "\" | \"" << res.str(2) << "\" | \"" << res.str(3) << endl;
 	funct.name = res.str(2);
 	funct.returnType = res.str(1);
 	string remainder = res.suffix().str();
@@ -190,7 +188,7 @@ int	main(int argc, char **argv)
 {
 	if (argc == 1)
 		return (error(usage()));
-	vector<Function>	functions;
+	unordered_map<string, Function>	functions;
 	string	headerName = "";
 	for (int i = 1; i < argc; i++)
 	{
@@ -208,11 +206,10 @@ int	main(int argc, char **argv)
 		return (error("Error: No output file specified."));
 	unordered_map<string, Function>	prototypes = readHeader(headerName);
 	vector<Function>	missing;
-	for (size_t i = 0; i < functions.size(); i++)
+	for (auto it = functions.begin() ; it != functions.end() ; it++)
 	{
-		cout << "Function: " << functions[i].name << " | present? " << isUpToDate(functions[i], prototypes[functions[i].name]) << endl;
-		if (!isUpToDate(functions[i], prototypes[functions[i].name]))
-			missing.push_back(functions[i]);
+		if (!isUpToDate(it->second, prototypes[it->second.name]))
+			missing.push_back(it->second);
 	}
 	if (missing.size())
 		rewriteHeader(headerName, missing);
