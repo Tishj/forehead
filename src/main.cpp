@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 21:53:16 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/25 12:28:00 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/25 16:20:54 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,11 @@
 #include <fstream>
 #include <Function.hpp>
 #include <unordered_map>
+#include <unistd.h>
+#include <sys/stat.h>
 
-#define NAME "hardhat"
+//#define NAME "hardhat"
+#define NAME "forehead"
 //#define NAME "headsup"
 //#define NAME "ahead"
 
@@ -30,7 +33,7 @@ string	usage()
 {
 	string out;
 
-	out += "Usage: hardhat [OPTION]... [input-files]...";
+	out += "Usage: forehead [OPTION]... [input-files]...";
 	return (out);
 }
 
@@ -38,6 +41,11 @@ int	error(string errmsg)
 {
 	cerr << errmsg << endl;
 	return (1);
+}
+
+bool exists (const std::string& name)
+{
+	return ( access( name.c_str(), F_OK ) != -1 );
 }
 
 bool	isUpToDate(Function sfunct, Function hfunct)
@@ -51,7 +59,7 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 {
 	regex	prototype("^(?:([^\\t]+)[\\ ]*)[\\t]+([^\\(]+)\\(([^\\(?\\)?]*)\\)?");
 	smatch	prot_res;
-	if (buf.size() <= 10 || buf[0] == '\t' || buf[0] == '/' || buf[0] == '}' || buf[0] == '{' || buf[0] == '#')
+	if (buf.size() <= 10 || buf[0] == '\t' || buf[0] == '/' || buf[0] == '}' || buf[0] == '{' || buf[0] == '#' || buf[0] == '*')
 		return (false);
 	if (!regex_search(buf, prot_res, prototype))
 		return (false);
@@ -92,29 +100,14 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 	return (true);
 }
 
-void	rewriteHeader(string headerName, vector<Function> missing)
+void	rewriteHeader(string headerName, unordered_map<string, Function> prototypes, vector<string> content)
 {
-	ifstream	read(headerName.c_str());
-
-	vector<string>	contents;
-	string buf;
-	while (getline(read, buf))
-		contents.push_back(buf);
-	read.close();
-	if (contents.size() <= 2)
-	{
-		//file is considered empty
-		//will handle later //TODO
-		return ;
-	}
 	ofstream	write(headerName.c_str());
-	for (size_t i = 0; i < contents.size() - 2; i++)
-		write << contents[i] << endl;
-	for (size_t i = 0; i < missing.size(); i++)
-		write << missing[i] << ";";
-	write << "\n";
-	for (size_t i = contents.size() - 2; i < contents.size() ; i++)
-		write << contents[i] << endl;
+	for (size_t i = 0; i < content.size() - 2; i++)
+		write << content[i] << endl;
+	for (auto it = prototypes.begin(); it != prototypes.end(); it++)
+		write << it->second << ";";
+	write << "\n\n#endif\n\n";
 }
 
 void	readFile(string name, unordered_map<string, Function>& all)
@@ -167,7 +160,7 @@ bool	isPrototype(ifstream& file, string buf, Function& funct)
 	return (true);
 }
 
-unordered_map<string, Function>	readHeader(string headerName)
+unordered_map<string, Function>	readHeader(string headerName, vector<string>& content)
 {
 	unordered_map<string, Function>	prototypes;
 	string buf;
@@ -178,10 +171,45 @@ unordered_map<string, Function>	readHeader(string headerName)
 		Function tmp;
 		if (isPrototype(file, buf, tmp))
 			prototypes[tmp.name] = tmp;
+		else
+			content.push_back(buf);
 		if (file.eof())
 			break ;
 	}
 	return (prototypes);
+}
+
+string	createGuard(string headerName)
+{
+	string guard;
+
+	for (size_t i = 0; i < headerName.size(); i++)
+	{
+		if (isalpha(headerName[i]) && islower(headerName[i]))
+			guard += toupper(headerName[i]);
+		else
+		{
+			if (i && islower(headerName[i - 1]))
+				guard += "_";
+			if (isalpha(headerName[i]))
+				guard += headerName[i];
+		}
+	}
+	return (guard);
+}
+
+void	createHeader(string headerName, unordered_map<string, Function> prototypes)
+{
+	ofstream	header(headerName.c_str());
+
+	size_t	path_separator = headerName.find_last_of('/');
+	if (path_separator != string::npos)
+		headerName = headerName.substr(path_separator + 1, headerName.size());
+	string guard = createGuard(headerName);
+	header << "#ifndef " << guard << "\n# define " << guard << "\n";
+	for (auto it = prototypes.begin(); it != prototypes.end(); it++)
+		header << it->second << ";";
+	header << "\n\n#endif\n\n";
 }
 
 int	main(int argc, char **argv)
@@ -204,14 +232,23 @@ int	main(int argc, char **argv)
 	}
 	if (!headerName.size())
 		return (error("Error: No output file specified."));
-	unordered_map<string, Function>	prototypes = readHeader(headerName);
-	vector<Function>	missing;
+	vector<string>	headerContent;
+	unordered_map<string, Function>	prototypes = readHeader(headerName, headerContent);
+	int	newPrototypes = 0;
 	for (auto it = functions.begin() ; it != functions.end() ; it++)
 	{
 		if (!isUpToDate(it->second, prototypes[it->second.name]))
-			missing.push_back(it->second);
+		{
+			prototypes[it->second.name] = it->second;
+			newPrototypes++;
+		}
 	}
-	if (missing.size())
-		rewriteHeader(headerName, missing);
+	if (newPrototypes)
+	{
+		if (exists(headerName))
+			rewriteHeader(headerName, prototypes, headerContent);
+		else
+			createHeader(headerName, prototypes);
+	}
 	return (0);
 }

@@ -6,11 +6,11 @@
 #    By: tbruinem <tbruinem@student.codam.nl>         +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/09/21 20:31:07 by tbruinem      #+#    #+#                  #
-#    Updated: 2020/09/25 12:04:53 by tbruinem      ########   odam.nl          #
+#    Updated: 2020/09/25 16:16:13 by tbruinem      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
-NAME =		hardhat
+NAME =		forehead
 SRCDIR =	src
 OBJDIR =	obj
 INCLDIR =	incl

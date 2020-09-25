@@ -1,0 +1,9 @@
+typedef	struct			s_cmd
+{
+	char				**args;
+	int					*argtypes;
+	int					cmdtype;
+	int					iostream[2];
+	int					cmdpipe[2];
+	struct s_cmd		*next;
+}						t_cmd;
