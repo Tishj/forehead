@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/26 10:35:26 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/26 12:39:36 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/26 13:04:52 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ class	Enum
 			out += this->name + "\n{\n";
 			for (size_t j = 0; j < this->elements.size() ; j++)
 				out += "\t" + this->elements[j] + "\n";
-			out += "}";
+			out += "};";
 			if (this->tdef.size())
 				out += "\t" + this->tdef;
 			out += "\n";

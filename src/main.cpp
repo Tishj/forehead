@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 21:53:16 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/26 12:51:06 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/26 16:31:55 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,9 +58,36 @@ bool	isUpToDate(Function sfunct, Function hfunct)
 	return (true);
 }
 
+
+//void - check
+//char **str - nope
+vector<string>	splitArgs(string list)
+{
+	size_t	idx = 0;
+	size_t	next;
+	string withoutTabs;
+	for (size_t index = 0; index < list.size() ; index++)
+		if (list[index] != '\t')
+			withoutTabs += list[index];
+	list = withoutTabs;
+	vector<string>	args;
+	for (; idx < list.size(); idx = next)
+	{
+		next = list.find(',', idx + 1);
+		if (next == string::npos)
+			next = list.size() + 1;
+		string raw = list.substr(idx != 0 ? idx + 1: idx, idx ? next - 1 - idx : next - idx);
+		size_t start = (raw[0] == ' ') ? raw.find_first_not_of(' ') : 0;
+		size_t end = (raw[raw.size() - 1] == ' ') ? raw.find_last_not_of(' ') : raw.size();
+		raw = raw.substr(start, end - start);
+		args.push_back(raw);
+	}
+	return (args);
+}
+
 bool	isFunction(ifstream& file, string buf, Function& funct)
 {
-	regex	prototype("^(?:([^\\t]+)[\\ ]*)[\\t]+([^\\(]+)([0-9a-z_\\* ,\\(??\\)??]+)");
+	regex	prototype("^(?:([^\\t]+)[\\ ]*)[\\t]+([^\\(]+)([\\[\\]0-9a-z_\\* ,\\(\\)]+)");
 	smatch	prot_res;
 	if (buf.size() <= 10 || buf[0] == '\t' || buf[0] == '/' || buf[0] == '}' || buf[0] == '{' || buf[0] == '#' || buf[0] == '*')
 		return (false);
@@ -73,7 +100,6 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 	if (funct.name == "main")
 		return (false);
 	string funct_args = prot_res.str(3);
-	string remainder = prot_res.suffix().str();
 	size_t	open_count = count(buf.begin(), buf.end(), '(');
 	size_t	close_count = count(buf.begin(), buf.end(), ')');
 	if (open_count != close_count)
@@ -88,40 +114,49 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 		}
 	}
 	funct_args = funct_args.substr(1, funct_args.size() - 2);
-	regex	arg("[\\t]*([^\\(\\)\\t,]+\\ +[^\\t,]+|void)(?:\\,?[\\ ]*)");
-	smatch	arg_res;
-	vector<string>	args;
-	while (regex_search(funct_args, arg_res, arg, regex_constants::match_any))
-	{
-		args.push_back(arg_res.str(1));
-		funct_args = arg_res.suffix().str();
-	}
-	funct.args = args;
+//	regex	arg("[\\t]*([^\\(\\)\\t,]+\\ +[^\\t,]+|void)(?:\\,?[\\ ]*)");
+//	smatch	arg_res;
+//	vector<string>	args;
+//	while (regex_search(funct_args, arg_res, arg, regex_constants::match_any))
+//	{
+//		args.push_back(arg_res.str(1));
+//		funct_args = arg_res.suffix().str();
+//	}
+	funct.args = splitArgs(funct_args);
 	return (true);
 }
 
 void	rewriteHeader(string headerName, Header& header)
 {
-//	ofstream	write(headerName.c_str());
-//	for (size_t i = 0; i < header.misc.size() - 2; i++)
-//		write << header.misc[i] << endl;
-//	for (auto it = header.prototypes.begin(); it != header.prototypes.end(); it++)
-//		write << it->second << ";";
-//	write << "\n\n#endif\n\n";
-	(void)headerName;
-	for (size_t i = 0; i < header.misc.size() - 2 ; i++)
-		cout << header.misc[i] << endl;
-	cout << endl;
+	ofstream	write(headerName.c_str());
+
+	bool	acceptNewLine = true;
+	for (size_t i = 0; i < header.misc.size() - 1 ; i++)
+	{
+		if (!header.misc[i].size())
+		{
+			if (acceptNewLine)
+			{
+				write << endl;
+				acceptNewLine = false;
+			}
+		}
+		else if (header.misc.size() > 1)
+		{
+			acceptNewLine = true;
+			write << header.misc[i] << endl;
+		}
+	}
 	for (size_t i = 0; i < header.others.size() ; i++)
-		cout << header.others[i] << endl;
+		write << header.others[i].print(6) << endl;
+	write << endl;
 	for (size_t i = 0; i < header.enums.size() ; i++)
-		cout << header.enums[i].print(6) << endl;
-	cout << endl;
+		write << header.enums[i].print(6) << endl;
 	for (size_t i = 0; i < header.structs.size() ; i++)
-		cout << header.structs[i].print(6) << endl;
+		write << header.structs[i].print(6) << endl;
 	for (auto it = header.prototypes.begin(); it != header.prototypes.end() ; it++)
-		cout << it->second.print(6) << endl;
-	cout << "\n\n#endif\n\n";
+		write << it->second.print(6) << endl;
+	write << "\n#endif\n";
 }
 
 void	readFile(string name, unordered_map<string, Function>& all)
@@ -144,42 +179,39 @@ void	readFile(string name, unordered_map<string, Function>& all)
 
 bool	isPrototype(ifstream& file, string buf, Function& funct)
 {
-	regex	exp("^([^\\t]+)[\\t]+([^\\(]+)\\(([^\\)]+)");
+	regex	exp("^([^\\t]+)[\\t]+([^\\(]+)([\\[\\]0-9a-z_\\* ,\\(??\\)??;]+)");
 	smatch	res;
 
+	if (buf.size() <= 3 || buf[0] == '*' || buf[0] == '/')
+		return (false);
 	if (!regex_search(buf, res, exp))
 		return (false);
 	funct.name = res.str(2);
 	funct.returnType = res.str(1);
-	string remainder = res.suffix().str();
 	string funct_args = res.str(3);
-	if (!remainder.size())
+	if (funct_args.size() <= 3)
+		return (false);
+	size_t	open_count = count(buf.begin(), buf.end(), '(');
+	size_t	close_count = count(buf.begin(), buf.end(), ')');
+	if (open_count != close_count)
 	{
 		while (getline(file, buf))
 		{
-			funct_args += buf;	
-			if (buf.find(')') != string::npos || file.eof())
+			funct_args += buf;
+			open_count += count(buf.begin(), buf.end(), '(');
+			close_count += count(buf.begin(), buf.end(), ')');
+			if (open_count == close_count || file.eof())
 				break ;
 		}
 	}
-	regex	arg("[\\t]*([^\\(\\)\\t\\ ,]+\\ +[^\\(\\)\\t\\ ,]+)(?:\\,?[\\ ]*)");
-	smatch	arg_res;
-	vector<string>	args;
-	while (regex_search(funct_args, arg_res, arg, regex_constants::match_any))
-	{
-		args.push_back(arg_res.str(1));
-		funct_args = arg_res.suffix().str();
-	}
-	funct.args = args;
-//	cout << funct << endl;
+	funct_args = funct_args.substr(1, funct_args.size() - 3);
+	funct.args = splitArgs(funct_args);
 	return (true);
 }
 
-//bool	isTypedef
-
 bool	isOther(string buf, Other& newOther)
 {
-	if (buf.size() <= 4 || buf[0] == '\t' || buf[0] == '}' || buf[0] == '{' || buf[buf.size() - 1] != ';' || !count(buf.begin(), buf.end(), '\t'))
+	if (buf.size() <= 4 || buf[0] == '\t' || buf[0] == '}' || buf[0] == '{' || buf[0] == '*' || buf[buf.size() - 1] != ';' || !count(buf.begin(), buf.end(), '\t') || count(buf.begin(), buf.end(), '('))
 		return (false);
 	size_t	idx = 0;
 	for (; idx < buf.size() && buf[idx] != '\t'; idx++)
@@ -187,13 +219,12 @@ bool	isOther(string buf, Other& newOther)
 	for (; idx < buf.size() && buf[idx] == '\t'; idx++) {}
 	for (; idx < buf.size() && buf[idx] != '\t'; idx++)
 		newOther.name += buf[idx];
-//	cerr << newOther;
 	return (true);
 }
 
 bool	isEnum(ifstream& file, string buf, Enum& newEnum)
 {
-	if (buf.size() <= 7 || (buf.compare(0, 4, "enum") && buf.compare(0, 12, "typedef enum") && buf.compare(0, 12, "typedef\tenum")) || buf[buf.size() - 1] == ';')
+	if (buf.size() <= 7 || buf[0] == '*' || (buf.compare(0, 4, "enum") && buf.compare(0, 12, "typedef enum") && buf.compare(0, 12, "typedef\tenum")) || buf[buf.size() - 1] == ';')
 		return (false);
 	size_t	lastTab = buf.rfind('\t');
 	if (lastTab == string::npos)
@@ -223,7 +254,7 @@ bool	isEnum(ifstream& file, string buf, Enum& newEnum)
 
 bool	isStruct(ifstream& file, string buf, Struct& newStruct)
 {
-	if (buf.size() <= 7 || (buf.compare(0, 6, "struct") && buf.compare(0, 14, "typedef struct") && buf.compare(0, 14, "typedef\tstruct")) || buf[buf.size() - 1] == ';')
+	if (buf.size() <= 7 || buf[0] == '*' || (buf.compare(0, 6, "struct") && buf.compare(0, 14, "typedef struct") && buf.compare(0, 14, "typedef\tstruct")) || buf[buf.size() - 1] == ';')
 		return (false);
 	size_t	lastTab = buf.rfind('\t');
 	if (lastTab == string::npos)
@@ -255,7 +286,6 @@ bool	isStruct(ifstream& file, string buf, Struct& newStruct)
 		if (file.eof() || closeBracket != string::npos)
 			break ;
 	}
-//	cerr << newStruct << endl;
 	return (true);
 }
 
