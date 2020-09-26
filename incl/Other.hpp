@@ -1,26 +1,39 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   Function.cpp                                       :+:    :+:            */
+/*   Other.hpp                                          :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
-/*   Created: 2020/09/23 15:49:30 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/26 12:43:09 by tbruinem      ########   odam.nl         */
+/*   Created: 2020/09/26 10:59:54 by tbruinem      #+#    #+#                 */
+/*   Updated: 2020/09/26 12:53:03 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
+#ifndef OTHER_HPP
+# define OTHER_HPP
+
 #include <iostream>
 #include <string>
-#include <cstdlib>
-#include <Function.hpp>
 
-using namespace std;
+class	Other
+{
+	public:
+		std::string	type;
+		std::string	name;
+		std::string print(size_t indent)
+		{
+			std::string out;
 
-Function::Function() {};
+			out += this->type + std::string(indent - (type.size() / 4), '\t') + this->name;
+			return (out);
+		}
+};
 
-Function::Function(string ret, string name, vector<string> args) : returnType(ret), name(name), args(args) {};
+std::ostream& operator<<(std::ostream& stream, Other& other)
+{
+	stream << other.type << "\t" << other.name << std::endl;
+	return (stream);
+}
 
-Function::Function(const Function& funct) : returnType(funct.returnType), name(funct.name), args(funct.args) {};
-
-Function::~Function() {};
+#endif

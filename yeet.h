@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/25 13:24:14 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/25 16:43:48 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/25 17:22:14 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 # define YEET_H
 
 #include <stddef.h>
-
 
 size_t	ft_strrlenrevs(char *str, char rstart, char rend, char *set);
 void	ft_strrev(char *str);
@@ -124,7 +123,7 @@ size_t	ft_strskipc(char *str, char c);
 size_t	ft_strslenrevr(char *str, char *set, char rstart, char rend);
 size_t	ft_strwlenc(char *str, char c);
 char	ft_chrmatchw(char c);
-t_tree	*ft_treebfirst(t_tree *root, int (*f)(void *item, void *cmp), t_list *queue, void *cm);
+t_tree	*ft_treebfirst(t_tree *root, int (*f)(void *item, void *cmp), t_list *queue, void *cmp);
 void	*ft_pstkpop(t_plist **list);
 int	ft_chrprintfdc(char c, char yes, int fd);
 char	*ft_strsuffix(char *str, char *suffix);

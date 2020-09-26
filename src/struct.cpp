@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/25 14:46:39 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/25 16:13:06 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/26 10:30:16 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ bool	isStruct(ifstream& file, string buf, vector<Struct>& all)
 {
 	Struct	newStruct;
 	
-	if (buf.size() <= 7 || (buf.compare(0, 6, "struct") && buf.compare(0, 7, "typedef")) || buf[buf.size() - 1] == ';')
+	if (buf.size() <= 7 || (buf.compare(0, 6, "struct") && buf.compare(0, 7, "typedef") && buf.compare(0, 4, "enum")) || buf[buf.size() - 1] == ';')
 		return (false);
 	size_t	lastTab = buf.rfind('\t');
 	if (lastTab == string::npos)

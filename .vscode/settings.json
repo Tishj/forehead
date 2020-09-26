@@ -47,6 +47,7 @@
 		"iterator": "cpp",
 		"map": "cpp",
 		"memory_resource": "cpp",
-		"random": "cpp"
+		"random": "cpp",
+		"iomanip": "cpp"
 	}
 }

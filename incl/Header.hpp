@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/24 11:13:32 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/24 11:50:35 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/26 11:48:14 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,9 @@
 #include <Function.hpp>
 #include <unordered_map>
 #include <vector>
+#include <Struct.hpp>
+#include <Enum.hpp>
+#include <Other.hpp>
 
 class	Header
 {
@@ -27,8 +30,12 @@ class	Header
 		size_t	indent;
 		std::vector<std::string>	includes;
 		std::vector<std::string>	misc;
+		std::vector<Struct>	structs;
+		std::vector<std::pair<std::string, std::string>>	tdefs;
+		std::vector<Enum>	enums;
+		std::vector<Other>	others;
 };
 
-std::ostream&	operator>>(std::ostream& stream, Header head);
+std::ostream&	operator<<(std::ostream& stream, Header head);
 
 #endif

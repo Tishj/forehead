@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 21:53:16 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/25 16:43:32 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/26 12:51:06 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,9 @@
 #include <unordered_map>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <Struct.hpp>
+#include <Header.hpp>
+#include <Other.hpp>
 
 //#define NAME "hardhat"
 #define NAME "forehead"
@@ -81,11 +84,7 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 			open_count += count(buf.begin(), buf.end(), '(');
 			close_count += count(buf.begin(), buf.end(), ')');
 			if (open_count == close_count || file.eof())
-			{
-				if (open_count == close_count)
-					funct_args.pop_back();
 				break ;
-			}
 		}
 	}
 	funct_args = funct_args.substr(1, funct_args.size() - 2);
@@ -101,14 +100,28 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 	return (true);
 }
 
-void	rewriteHeader(string headerName, unordered_map<string, Function> prototypes, vector<string> content)
+void	rewriteHeader(string headerName, Header& header)
 {
-	ofstream	write(headerName.c_str());
-	for (size_t i = 0; i < content.size() - 2; i++)
-		write << content[i] << endl;
-	for (auto it = prototypes.begin(); it != prototypes.end(); it++)
-		write << it->second << ";";
-	write << "\n\n#endif\n\n";
+//	ofstream	write(headerName.c_str());
+//	for (size_t i = 0; i < header.misc.size() - 2; i++)
+//		write << header.misc[i] << endl;
+//	for (auto it = header.prototypes.begin(); it != header.prototypes.end(); it++)
+//		write << it->second << ";";
+//	write << "\n\n#endif\n\n";
+	(void)headerName;
+	for (size_t i = 0; i < header.misc.size() - 2 ; i++)
+		cout << header.misc[i] << endl;
+	cout << endl;
+	for (size_t i = 0; i < header.others.size() ; i++)
+		cout << header.others[i] << endl;
+	for (size_t i = 0; i < header.enums.size() ; i++)
+		cout << header.enums[i].print(6) << endl;
+	cout << endl;
+	for (size_t i = 0; i < header.structs.size() ; i++)
+		cout << header.structs[i].print(6) << endl;
+	for (auto it = header.prototypes.begin(); it != header.prototypes.end() ; it++)
+		cout << it->second.print(6) << endl;
+	cout << "\n\n#endif\n\n";
 }
 
 void	readFile(string name, unordered_map<string, Function>& all)
@@ -158,26 +171,118 @@ bool	isPrototype(ifstream& file, string buf, Function& funct)
 		funct_args = arg_res.suffix().str();
 	}
 	funct.args = args;
+//	cout << funct << endl;
 	return (true);
 }
 
-unordered_map<string, Function>	readHeader(string headerName, vector<string>& content)
+//bool	isTypedef
+
+bool	isOther(string buf, Other& newOther)
 {
-	unordered_map<string, Function>	prototypes;
+	if (buf.size() <= 4 || buf[0] == '\t' || buf[0] == '}' || buf[0] == '{' || buf[buf.size() - 1] != ';' || !count(buf.begin(), buf.end(), '\t'))
+		return (false);
+	size_t	idx = 0;
+	for (; idx < buf.size() && buf[idx] != '\t'; idx++)
+		newOther.type += buf[idx];
+	for (; idx < buf.size() && buf[idx] == '\t'; idx++) {}
+	for (; idx < buf.size() && buf[idx] != '\t'; idx++)
+		newOther.name += buf[idx];
+//	cerr << newOther;
+	return (true);
+}
+
+bool	isEnum(ifstream& file, string buf, Enum& newEnum)
+{
+	if (buf.size() <= 7 || (buf.compare(0, 4, "enum") && buf.compare(0, 12, "typedef enum") && buf.compare(0, 12, "typedef\tenum")) || buf[buf.size() - 1] == ';')
+		return (false);
+	size_t	lastTab = buf.rfind('\t');
+	if (lastTab == string::npos)
+		return (false);
+	newEnum.name = buf.substr(lastTab + 1, (buf.size() - lastTab - 1));
+	getline(file, buf);
+	while (getline(file, buf))
+	{
+		size_t	closeBracket = buf.find('}');
+		if (closeBracket != string::npos)
+		{
+			lastTab = buf.rfind('\t');
+			if (lastTab != string::npos)
+				newEnum.tdef = buf.substr(lastTab + 1, buf.size() - lastTab - 1);
+		}
+		else
+		{
+			size_t idx = 0;
+			for (; idx < buf.size() && buf[idx] == '\t';idx++) {}
+			newEnum.elements.push_back(buf.substr(idx, buf.size() - idx));
+		}
+		if (file.eof() || closeBracket != string::npos)
+			break ;
+	}
+	return (true);
+}
+
+bool	isStruct(ifstream& file, string buf, Struct& newStruct)
+{
+	if (buf.size() <= 7 || (buf.compare(0, 6, "struct") && buf.compare(0, 14, "typedef struct") && buf.compare(0, 14, "typedef\tstruct")) || buf[buf.size() - 1] == ';')
+		return (false);
+	size_t	lastTab = buf.rfind('\t');
+	if (lastTab == string::npos)
+		return (false);
+	newStruct.name = buf.substr(lastTab + 1, (buf.size() - lastTab - 1));
+	getline(file, buf);
+	while (getline(file, buf))
+	{
+		size_t	closeBracket = buf.find('}');
+		if (closeBracket != string::npos)
+		{
+			lastTab = buf.rfind('\t');
+			if (lastTab != string::npos)
+				newStruct.tdef = buf.substr(lastTab + 1, buf.size() - lastTab - 1);
+		}
+		else
+		{
+			string name;
+			string type;
+			size_t idx = 0;
+			for (; idx < buf.size() && buf[idx] == '\t';idx++) {}
+			for (; idx < buf.size() && buf[idx] != '\t';idx++)
+				type += buf[idx];
+			for (; idx < buf.size() && buf[idx] == '\t';idx++) {}
+			for (; idx < buf.size() && buf[idx] != '\t';idx++)
+				name += buf[idx];
+			newStruct.elements.push_back(pair<string, string>(type, name));
+		}
+		if (file.eof() || closeBracket != string::npos)
+			break ;
+	}
+//	cerr << newStruct << endl;
+	return (true);
+}
+
+void	readHeader(string headerName, Header& header)
+{
 	string buf;
 	ifstream	file(headerName.c_str());
 
 	while (getline(file, buf))
 	{
-		Function tmp;
-		if (isPrototype(file, buf, tmp))
-			prototypes[tmp.name] = tmp;
+		Struct newStruct;
+		Enum newEnum;
+		Function newFunct;
+		Other newOther;
+		if (isPrototype(file, buf, newFunct))
+			header.prototypes[newFunct.name] = newFunct;
+		else if (isOther(buf, newOther))
+			header.others.push_back(newOther);
+		else if (isStruct(file, buf, newStruct))
+			header.structs.push_back(newStruct);
+		else if (isEnum(file, buf, newEnum))
+			header.enums.push_back(newEnum);
 		else
-			content.push_back(buf);
+			header.misc.push_back(buf);
 		if (file.eof())
 			break ;
 	}
-	return (prototypes);
 }
 
 string	createGuard(string headerName)
@@ -199,7 +304,7 @@ string	createGuard(string headerName)
 	return (guard);
 }
 
-void	createHeader(string headerName, unordered_map<string, Function> prototypes)
+void	createHeader(string headerName, Header& headerData)
 {
 	ofstream	header(headerName.c_str());
 
@@ -208,8 +313,8 @@ void	createHeader(string headerName, unordered_map<string, Function> prototypes)
 		headerName = headerName.substr(path_separator + 1, headerName.size());
 	string guard = createGuard(headerName);
 	header << "#ifndef " << guard << "\n# define " << guard << "\n";
-	for (auto it = prototypes.begin(); it != prototypes.end(); it++)
-		header << it->second << ";";
+	for (auto it = headerData.prototypes.begin(); it != headerData.prototypes.end(); it++)
+		header << it->second.print(6) << ";";
 	header << "\n\n#endif\n\n";
 }
 
@@ -219,6 +324,7 @@ int	main(int argc, char **argv)
 		return (error(usage()));
 	unordered_map<string, Function>	functions;
 	string	headerName = "";
+	Header	headerData;
 	for (int i = 1; i < argc; i++)
 	{
 		if (string(argv[i]) == "-o")
@@ -233,23 +339,22 @@ int	main(int argc, char **argv)
 	}
 	if (!headerName.size())
 		return (error("Error: No output file specified."));
-	vector<string>	headerContent;
-	unordered_map<string, Function>	prototypes = readHeader(headerName, headerContent);
+	readHeader(headerName, headerData);
 	int	newPrototypes = 0;
 	for (auto it = functions.begin() ; it != functions.end() ; it++)
 	{
-		if (!isUpToDate(it->second, prototypes[it->second.name]))
+		if (!isUpToDate(it->second, headerData.prototypes[it->second.name]))
 		{
-			prototypes[it->second.name] = it->second;
+			headerData.prototypes[it->second.name] = it->second;
 			newPrototypes++;
 		}
 	}
-	if (newPrototypes)
-	{
-		if (exists(headerName))
-			rewriteHeader(headerName, prototypes, headerContent);
-		else
-			createHeader(headerName, prototypes);
-	}
+//	if (newPrototypes)
+//	{
+//		if (exists(headerName))
+			rewriteHeader(headerName, headerData);
+//		else
+//			createHeader(headerName, headerData);
+//	}
 	return (0);
 }
