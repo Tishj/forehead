@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 21:53:16 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/26 18:04:48 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/26 20:01:37 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,8 @@ vector<string>	splitArgs(string list)
 		string raw = list.substr(idx != 0 ? idx + 1: idx, idx ? next - 1 - idx : next - idx);
 		size_t start = (raw[0] == ' ') ? raw.find_first_not_of(' ') : 0;
 		size_t end = (raw[raw.size() - 1] == ' ') ? raw.find_last_not_of(' ') : raw.size();
-		raw = raw.substr(start, end - start);
+		if (start != string::npos && end != string::npos)
+			raw = raw.substr(start, end - start);
 		args.push_back(raw);
 	}
 	return (args);
@@ -83,9 +84,9 @@ vector<string>	splitArgs(string list)
 
 bool	isFunction(ifstream& file, string buf, Function& funct)
 {
-	regex	prototype("^(?:([^\\t]+)[\\ ]*)[\\t]+([^\\(]+)([\\[\\]\\.0-9a-z_\\* ,\\(\\)]+)");
+	regex	prototype("^(?:([^\\t]+)[\\ ]*)[\\t]+([\\*a-z0-9_]+)(\\([\\[\\]\\.0-9a-z_\\* ,\\(\\)]+)");
 	smatch	prot_res;
-	if (buf.size() <= 10 || buf[0] == '\t' || buf[0] == '/' || buf[0] == '}' || buf[0] == '{' || buf[0] == '#' || buf[0] == '*')
+	if (buf.size() <= 10 || buf[0] == '\t' || buf[0] == '/' || buf[0] == '}' || buf[0] == '{' || buf[0] == '#' || buf[0] == ' ' || buf[0] == '*')
 		return (false);
 	if (!regex_search(buf, prot_res, prototype))
 		return (false);
@@ -109,7 +110,11 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 				break ;
 		}
 	}
-	funct_args = funct_args.substr(1, funct_args.size() - 2);
+	size_t	end_of_arglist = funct_args.rfind(')');
+	cerr << funct_args << endl;
+//	end_of_arglist -= (end_of_arglist >= 2) ? 2 : 0;
+	funct_args = funct_args.substr(1, end_of_arglist - 1);
+	cerr << funct_args << endl;
 	funct.args = splitArgs(funct_args);
 	return (true);
 }
@@ -168,10 +173,10 @@ void	readFile(string name, unordered_map<string, Function>& all)
 
 bool	isPrototype(ifstream& file, string buf, Function& funct)
 {
-	regex	exp("^([^\\t]+)[\\t]+([^\\(]+)([\\[\\]\\.0-9a-z_\\* ,\\(??\\)??;]+)");
+	regex	exp("^([^\\t]+)[\\t]+([^\\(]+)(\\([\\[\\]\\.0-9a-z_\\* ,\\(??\\)??;]+)");
 	smatch	res;
 
-	if (buf.size() <= 3 || buf[0] == '*' || buf[0] == '/')
+	if (buf.size() <= 3 || buf[0] == '*' || buf[0] == '/' || buf[0] == '\t' || buf[0] == ' ')
 		return (false);
 	if (!regex_search(buf, res, exp))
 		return (false);
@@ -193,7 +198,9 @@ bool	isPrototype(ifstream& file, string buf, Function& funct)
 				break ;
 		}
 	}
-	funct_args = funct_args.substr(1, funct_args.size() - 3);
+	size_t	end_of_arglist = funct_args.size();
+	end_of_arglist -= (end_of_arglist >= 3) ? 3 : 0;
+	funct_args = funct_args.substr(1, end_of_arglist);
 	funct.args = splitArgs(funct_args);
 	return (true);
 }
@@ -360,6 +367,7 @@ int	main(int argc, char **argv)
 		return (error("Error: No output file specified."));
 	readHeader(headerName, headerData);
 	int	newPrototypes = 0;
+	cerr << "FUNCTIONS_FOUND: " << functions.size() << endl;
 	for (auto it = functions.begin() ; it != functions.end() ; it++)
 	{
 		if (!isUpToDate(it->second, headerData.prototypes[it->second.name]))
@@ -368,6 +376,7 @@ int	main(int argc, char **argv)
 			newPrototypes++;
 		}
 	}
+	cerr << "NEW_PROTOTYPES: " << newPrototypes << endl;
 	if (newPrototypes)
 	{
 		if (exists(headerName))

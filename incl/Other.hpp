@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/26 10:59:54 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/26 12:53:57 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/26 19:18:22 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,8 @@ class	Other
 		{
 			std::string out;
 
-			out += this->type + std::string(indent - (type.size() / 4), '\t') + this->name;
+			size_t	tabAmount = ((int)(indent - (type.size() / 4)) < 0) ? 0 : indent - (type.size() / 4);
+			out += this->type + std::string(tabAmount, '\t') + this->name;
 			return (out);
 		}
 };

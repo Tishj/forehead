@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 15:46:52 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/26 18:04:19 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/26 19:17:33 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,8 @@ class	Function
 			std::string out;
 
 			out += this->returnType;
-			out += std::string(indent - (this->returnType.size() / 4), '\t');
+			size_t	tabAmount = ((int)(indent - (this->returnType.size() / 4)) < 0) ? 0 : indent - (this->returnType.size() / 4);
+			out += std::string(tabAmount, '\t');
 			out += this->name + "(";
 			size_t	lineSize = (indent * 4) + this->name.size() + 1;
 			if (this->args.size() && lineSize + this->args[0].size() >= 80)

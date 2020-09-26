@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/25 15:58:19 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/26 12:50:10 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/26 19:16:48 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,11 +31,13 @@ class	Struct
 			if (this->tdef.size())
 				out += "typedef ";
 			out += "struct";
-			out += std::string(indent - (out.size() / 4), '\t');
+			size_t	tabAmount = ((int)(indent - (out.size() / 4)) < 0) ? 0 : indent - (out.size() / 4);
+			out += std::string(tabAmount, '\t');
 			out += this->name + "\n{\n";
 			for (size_t j = 0; j < this->elements.size() ; j++)
 			{
 				out += "\t" + this->elements[j].first;
+				tabAmount = ((int)(indent - 1 - (this->elements[j].first.size() / 4)) < 0) ? 0 : indent - 1 - (this->elements[j].first.size() / 4);
 				out += std::string(indent - 1 - (this->elements[j].first.size() / 4), '\t');
 				out += this->elements[j].second + "\n";
 			}
