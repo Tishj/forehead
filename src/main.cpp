@@ -39,18 +39,18 @@ string	usage()
 	return (out);
 }
 
-int	error(string errmsg)
+inline int	error(string errmsg)
 {
 	cerr << errmsg << endl;
 	return (1);
 }
 
-bool exists (const std::string& name)
+inline bool exists (const std::string& name)
 {
 	return ( access( name.c_str(), F_OK ) != -1 );
 }
 
-bool	isUpToDate(Function sfunct, Function hfunct)
+inline bool	isUpToDate(Function sfunct, Function hfunct)
 {
 	if (sfunct.name != hfunct.name)
 		return (false);

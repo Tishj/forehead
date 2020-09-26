@@ -31,7 +31,7 @@ class	Header
 		std::vector<std::string>	includes;
 		std::vector<std::string>	misc;
 		std::vector<Struct>	structs;
-		std::vector<std::pair<std::string, std::string>>	tdefs;
+		std::vector<std::pair<std::string, std::string> >	tdefs;
 		std::vector<Enum>	enums;
 		std::vector<Other>	others;
 };

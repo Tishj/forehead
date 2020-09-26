@@ -20,10 +20,13 @@ SRC :=		main \
 
 OBJ :=		$(SRC:%=$(OBJDIR)/%.o)
 SRC	:=		$(SRC:%=$(SRCDIR)/%.cpp)
-FLAGS =		-Wall -Wextra -Werror
+FLAGS =		-Wall -Wextra -Werror -std=c++11
 
 ifeq ($(DEBUG),1)
 	FLAGS += -g -fsanitize=address
+endif
+ifeq ($(RELEASE), 1)
+	FLAGS += -finline-functions -Ofast -m64 -funroll-loops -fvectorize
 endif
 
 all: $(NAME)
@@ -36,6 +39,9 @@ obj/%.o: src/%.cpp
 
 $(NAME): $(OBJ)
 	$(CXX) $(FLAGS) -I $(INCLDIR) $(OBJ) -o $@
+
+release: $(OBJ)
+	make re RELEASE=1
 
 clean:
 	rm -rf $(OBJ)
