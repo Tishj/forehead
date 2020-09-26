@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 21:53:16 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/26 16:31:55 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/26 18:04:48 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,6 @@
 //#define NAME "headsup"
 //#define NAME "ahead"
 
-//set this with -t
 #define TAB_SIZE 4
 
 using namespace std;
@@ -58,9 +57,6 @@ bool	isUpToDate(Function sfunct, Function hfunct)
 	return (true);
 }
 
-
-//void - check
-//char **str - nope
 vector<string>	splitArgs(string list)
 {
 	size_t	idx = 0;
@@ -87,7 +83,7 @@ vector<string>	splitArgs(string list)
 
 bool	isFunction(ifstream& file, string buf, Function& funct)
 {
-	regex	prototype("^(?:([^\\t]+)[\\ ]*)[\\t]+([^\\(]+)([\\[\\]0-9a-z_\\* ,\\(\\)]+)");
+	regex	prototype("^(?:([^\\t]+)[\\ ]*)[\\t]+([^\\(]+)([\\[\\]\\.0-9a-z_\\* ,\\(\\)]+)");
 	smatch	prot_res;
 	if (buf.size() <= 10 || buf[0] == '\t' || buf[0] == '/' || buf[0] == '}' || buf[0] == '{' || buf[0] == '#' || buf[0] == '*')
 		return (false);
@@ -114,14 +110,6 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 		}
 	}
 	funct_args = funct_args.substr(1, funct_args.size() - 2);
-//	regex	arg("[\\t]*([^\\(\\)\\t,]+\\ +[^\\t,]+|void)(?:\\,?[\\ ]*)");
-//	smatch	arg_res;
-//	vector<string>	args;
-//	while (regex_search(funct_args, arg_res, arg, regex_constants::match_any))
-//	{
-//		args.push_back(arg_res.str(1));
-//		funct_args = arg_res.suffix().str();
-//	}
 	funct.args = splitArgs(funct_args);
 	return (true);
 }
@@ -131,9 +119,10 @@ void	rewriteHeader(string headerName, Header& header)
 	ofstream	write(headerName.c_str());
 
 	bool	acceptNewLine = true;
-	for (size_t i = 0; i < header.misc.size() - 1 ; i++)
+	size_t	endOfMisc = (header.misc.size()) ? header.misc.size() - 1 : header.misc.size();
+	for (size_t i = 0; i < endOfMisc ; i++)
 	{
-		if (!header.misc[i].size())
+		if (header.misc[i].empty())
 		{
 			if (acceptNewLine)
 			{
@@ -179,7 +168,7 @@ void	readFile(string name, unordered_map<string, Function>& all)
 
 bool	isPrototype(ifstream& file, string buf, Function& funct)
 {
-	regex	exp("^([^\\t]+)[\\t]+([^\\(]+)([\\[\\]0-9a-z_\\* ,\\(??\\)??;]+)");
+	regex	exp("^([^\\t]+)[\\t]+([^\\(]+)([\\[\\]\\.0-9a-z_\\* ,\\(??\\)??;]+)");
 	smatch	res;
 
 	if (buf.size() <= 3 || buf[0] == '*' || buf[0] == '/')
@@ -342,10 +331,10 @@ void	createHeader(string headerName, Header& headerData)
 	if (path_separator != string::npos)
 		headerName = headerName.substr(path_separator + 1, headerName.size());
 	string guard = createGuard(headerName);
-	header << "#ifndef " << guard << "\n# define " << guard << "\n";
-	for (auto it = headerData.prototypes.begin(); it != headerData.prototypes.end(); it++)
-		header << it->second.print(6) << ";";
-	header << "\n\n#endif\n\n";
+	header << "#ifndef " << guard << "\n# define " << guard << "\n\n";
+	for (auto it = headerData.prototypes.begin(); it != headerData.prototypes.end() ; it++)
+		header << it->second.print(6) << endl;
+	header << "\n#endif\n";
 }
 
 int	main(int argc, char **argv)
@@ -379,12 +368,12 @@ int	main(int argc, char **argv)
 			newPrototypes++;
 		}
 	}
-//	if (newPrototypes)
-//	{
-//		if (exists(headerName))
+	if (newPrototypes)
+	{
+		if (exists(headerName))
 			rewriteHeader(headerName, headerData);
-//		else
-//			createHeader(headerName, headerData);
-//	}
+		else
+			createHeader(headerName, headerData);
+	}
 	return (0);
 }

@@ -1,17 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   minishell_original.h                               :+:    :+:            */
+/*   minishell.h                                        :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: rlucas <marvin@codam.nl>                     +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/04/16 10:51:49 by rlucas        #+#    #+#                 */
-/*   Updated: 2020/09/26 13:00:16 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/26 17:57:19 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef MINISHELL_ORIGINAL_H
-# define MINISHELL_ORIGINAL_H
+#ifndef MINISHELL_H
+# define MINISHELL_H
 
 # define STDIN 0
 # define STDOUT 1
@@ -104,12 +104,17 @@ typedef struct			s_msh
 	size_t				argc;
 }						t_msh;
 
-void					print_tokens(t_tok *tokens);
-void					sighandler(int signal);
+int						ft_printf(char *arguments, ...);
+int						read_input(t_msh *prog);
+int						initialize_line_editor(t_line *line);
+void					refresh_cursor(t_line *line);
+char					*prompt(t_msh *prog, t_line *line);
 long long				ft_str2cmpstr(const char **str2, char *str);
-void					print_state(int c, t_lexer lex);
-size_t					ft_str2len(char **str);
+void					print_tokens(t_tok *tokens);
 void					ft_str2print(char **str);
+size_t					ft_str2len(char **str);
+void					print_state(int c, t_lexer lex);
+void					sighandler(int signal);
 size_t					ft_no_ansi_strlen(const char *str);
 void					debug_commands(t_cmd *commands);
 char					*ft_strsdup(char *str, char *set);
@@ -121,9 +126,5 @@ char					*error_lookup(int err);
 void					error_exit(t_msh *prog, int err);
 int						get_endstate(t_vecstr *line);
 void					std_exit(t_msh *prog, int n);
-char					*prompt(t_msh *prog, t_line *line);
-void					refresh_cursor(t_line *line);
-int						initialize_line_editor(t_line *line);
-int						read_input(t_msh *prog);
 
 #endif
