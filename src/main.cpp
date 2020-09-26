@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 21:53:16 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/26 20:01:37 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/09/26 21:03:06 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,10 +111,7 @@ bool	isFunction(ifstream& file, string buf, Function& funct)
 		}
 	}
 	size_t	end_of_arglist = funct_args.rfind(')');
-	cerr << funct_args << endl;
-//	end_of_arglist -= (end_of_arglist >= 2) ? 2 : 0;
 	funct_args = funct_args.substr(1, end_of_arglist - 1);
-	cerr << funct_args << endl;
 	funct.args = splitArgs(funct_args);
 	return (true);
 }
@@ -364,10 +361,9 @@ int	main(int argc, char **argv)
 			readFile(argv[i], functions);
 	}
 	if (!headerName.size())
-		return (error("Error: No output file specified."));
+		return (error("Error: No output file specified. Use -o \"OUTPUT_FILE\""));
 	readHeader(headerName, headerData);
 	int	newPrototypes = 0;
-	cerr << "FUNCTIONS_FOUND: " << functions.size() << endl;
 	for (auto it = functions.begin() ; it != functions.end() ; it++)
 	{
 		if (!isUpToDate(it->second, headerData.prototypes[it->second.name]))
@@ -376,7 +372,6 @@ int	main(int argc, char **argv)
 			newPrototypes++;
 		}
 	}
-	cerr << "NEW_PROTOTYPES: " << newPrototypes << endl;
 	if (newPrototypes)
 	{
 		if (exists(headerName))
