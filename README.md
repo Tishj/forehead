@@ -25,7 +25,7 @@ You don't even have to worry about [norminette](norme.en.pdf) :rocket:
 ```bash
 git clone https://github.com/Tishj/forehead ~/forehead
 make -C ~/forehead release
-echo 'alias forehead="~/forehead/forehead"' >> ~/.zshrc
+. ~/forehead/install.sh
 ```
 
 ### usage
