@@ -22,8 +22,8 @@ class	Struct
 		Struct() {} ;
 		std::string	name;
 		std::string	tdef;
-		std::vector<std::pair<std::string, std::string>>	elements;
-		Struct(std::string name, std::string tdef, std::vector<std::pair<std::string, std::string>> elements) : name(name), tdef(tdef), elements(elements) {} ;
+		std::vector<std::pair<std::string, std::string> >	elements;
+		Struct(std::string name, std::string tdef, std::vector<std::pair<std::string, std::string> > elements) : name(name), tdef(tdef), elements(elements) {} ;
 		~Struct() {} ;
 		std::string print(size_t indent)
 		{
