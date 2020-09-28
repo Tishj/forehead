@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SHELL=$(ps -p $$ | awk '{print $4}' | grep -v "CMD")
+SHELL=$(ps -p $$ | awk '{print $4}' | grep -v "CMD" | rev | cut -d '/' -f1 | rev)
 SHELLRC_PATH=$HOME"/."$SHELL"rc"
 
 if ! cat $SHELLRC_PATH | grep "alias forehead=" > /dev/null;
