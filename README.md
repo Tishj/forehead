@@ -28,11 +28,13 @@ make -C ~/forehead release
 . ~/forehead/install.sh
 ```
 
-### usage
+### Usage
 
 ```bash
-forehead SOURCEFILES -o HEADERFILE
+forehead [OPTIONS] SOURCEFILES
 ```
+Example:
+`forehead -o minishell.h ./src/*`
 
 ## Features
 
