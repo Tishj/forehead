@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/24 11:13:32 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/10/01 19:02:20 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/10/02 17:59:10 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,12 @@ class	Header
 		std::vector<std::pair<std::string, std::string> >	tdefs;
 		std::vector<Other>	others;
 		std::vector<HeaderData*>	data;
+		~Header()
+		{
+			std::cerr << "CLEANING UP HEADERDATA" << std::endl;
+			for (size_t i = 0; i < data.size(); i++)
+				delete data[i];
+		}
 };
 
 #endif

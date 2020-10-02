@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 21:53:16 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/10/02 17:24:12 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/10/02 18:44:56 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,6 +111,7 @@ bool	isFunction(ifstream& file, string buf, Function& funct, size_t& indent)
 	funct.name = prot_res.str(2);
 	if (funct.name == "main")
 		return (false);
+	funct.raw = buf;
 	if (funct.returnType.size() / 4 > indent)
 		indent = funct.returnType.size() / 4;
 	string funct_args = prot_res.str(3);
@@ -135,59 +136,32 @@ bool	isFunction(ifstream& file, string buf, Function& funct, size_t& indent)
 
 void	rewriteHeader(string headerName, Header& header, size_t indent)
 {
-//	ofstream	write(headerName.c_str());
-	(void)headerName;
-	string	DataTypes[] = {
-	"OBJECT",
-	"TYPEDEF",
-	"MISC",
-	"PROTOTYPE",
-	"OTHER",
-	"HEAD",
-	"GUARD",
-	"INCLUDE",
-	"DEFINE",
-	"COMMENT"
-	};
+	ofstream	write(headerName.c_str());
+//	(void)headerName;
+//	string	DataTypes[] = {
+//	"OBJECT",
+//	"TYPEDEF",
+//	"MISC",
+//	"PROTOTYPE",
+//	"OTHER",
+//	"HEAD",
+//	"GUARD",
+//	"INCLUDE",
+//	"DEFINE",
+//	"COMMENT"
+//	};
 
 	int type = header.data.size() ? header.data[0]->getType() : -1;
 	for (size_t i = 0; i < header.data.size() ; i++)
 	{
-		cerr << DataTypes[header.data[i]->getType()] << " --- " << header.data[i]->raw << endl;
+//		cerr << DataTypes[header.data[i]->getType()] << " --- " << header.data[i]->raw << endl;
 		if ((i && header.data[i]->getType() != type) || header.data[i]->getType() == OBJECT)
 		{
-			cout << endl;
+			write << endl;
 			type = header.data[i]->getType();
 		}
-		cout << header.data[i]->print(indent) << endl;
+		write << header.data[i]->print(indent) << endl;
 	}
-//	bool	acceptNewLine = true;
-//	size_t	endOfMisc = (header.misc.size()) ? header.misc.size() - 1 : header.misc.size();
-/* 	for (size_t i = 0; i < endOfMisc ; i++)
-	{
-		if (header.misc[i].empty())
-		{
-			if (acceptNewLine && i + 1 < endOfMisc)
-			{
-				write << endl;
-				acceptNewLine = false;
-			}
-		}
-		else if (header.misc.size() > 1)
-		{
-			acceptNewLine = true;
-			write << header.misc[i] << endl;
-		}
-	}
-	for (size_t i = 0; i < header.others.size() ; i++)
-		write << header.others[i].print(indent) << endl;
-	if (header.others.size())
-		write << endl;
-	for (size_t i = 0; i < header.structs.size() ; i++)
-		write << header.structs[i].print(indent) << endl;
-	for (auto it = header.prototypes.begin(); it != header.prototypes.end() ; it++)
-		write << it->second.print(indent) << endl;
-	write << "\n#endif\n"; */
 }
 
 void	readFile(string name, unordered_map<string, Function>& all, size_t& indent)
@@ -410,7 +384,10 @@ void	readHeader(string headerName, Header& header, size_t& indent)
 		if (!lineNumber && isHead(file, buf, newHead))
 			header.data.push_back(new Head(newHead));
 		else if (isPrototype(file, buf, newFunct, indent))
+		{
+			header.prototypes.insert(pair<string, Function>(newFunct.name, newFunct));
 			header.data.push_back(new Function(newFunct));
+		}
 		else if (isOther(buf, newOther, indent))
 			header.data.push_back(new Other(newOther));
 		else if (isObject(file, buf, newObject, indent))
@@ -490,18 +467,27 @@ int	main(int argc, char **argv)
 		return (error("Error: No output file specified. Use -o \"OUTPUT_FILE\""));
 	readHeader(headerName, headerData, indent);
 	int	newPrototypes = 0;
+	vector<HeaderData *>	missingPrototypes;
 	for (auto it = functions.begin() ; it != functions.end() ; it++)
 	{
 		if (!isUpToDate(it->second, headerData.prototypes[it->second.name]))
 		{
-			headerData.prototypes[it->second.name] = it->second;
+//			headerData.prototypes[it->second.name] = it->second;
 			newPrototypes++;
+			missingPrototypes.push_back(new Function(it->second));
+//			cerr << "FUNCTION:" << it->second.name << "was missing." << endl;
 		}
 	}
+	int EndOfPrototypes = headerData.data.size() - 1;
+	for (; EndOfPrototypes >= 0 && headerData.data[EndOfPrototypes]->getType() != PROTOTYPE ; EndOfPrototypes--) {}
+	headerData.data.insert(headerData.data.begin() + EndOfPrototypes + 1, missingPrototypes.begin(), missingPrototypes.end());
 	indent++;
-	if (exists(headerName))
-		rewriteHeader(headerName, headerData, indent);
-	else
-		createHeader(headerName, headerData, indent);
+//	if (newPrototypes)
+//	{
+		if (exists(headerName))
+			rewriteHeader(headerName, headerData, indent);
+		else
+			createHeader(headerName, headerData, indent);
+//	}
 	return (0);
 }
