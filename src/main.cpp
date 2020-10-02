@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 21:53:16 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/27 11:20:59 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/10/02 17:24:12 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,9 +18,15 @@
 #include <unordered_map>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <Struct.hpp>
+#include <Object.hpp>
 #include <Header.hpp>
 #include <Other.hpp>
+#include <Misc.hpp>
+#include <Define.hpp>
+#include <Comment.hpp>
+#include <Guard.hpp>
+#include <Include.hpp>
+#include <Head.hpp>
 
 //#define NAME "hardhat"
 #define NAME "forehead"
@@ -129,11 +135,35 @@ bool	isFunction(ifstream& file, string buf, Function& funct, size_t& indent)
 
 void	rewriteHeader(string headerName, Header& header, size_t indent)
 {
-	ofstream	write(headerName.c_str());
+//	ofstream	write(headerName.c_str());
+	(void)headerName;
+	string	DataTypes[] = {
+	"OBJECT",
+	"TYPEDEF",
+	"MISC",
+	"PROTOTYPE",
+	"OTHER",
+	"HEAD",
+	"GUARD",
+	"INCLUDE",
+	"DEFINE",
+	"COMMENT"
+	};
 
-	bool	acceptNewLine = true;
-	size_t	endOfMisc = (header.misc.size()) ? header.misc.size() - 1 : header.misc.size();
-	for (size_t i = 0; i < endOfMisc ; i++)
+	int type = header.data.size() ? header.data[0]->getType() : -1;
+	for (size_t i = 0; i < header.data.size() ; i++)
+	{
+		cerr << DataTypes[header.data[i]->getType()] << " --- " << header.data[i]->raw << endl;
+		if ((i && header.data[i]->getType() != type) || header.data[i]->getType() == OBJECT)
+		{
+			cout << endl;
+			type = header.data[i]->getType();
+		}
+		cout << header.data[i]->print(indent) << endl;
+	}
+//	bool	acceptNewLine = true;
+//	size_t	endOfMisc = (header.misc.size()) ? header.misc.size() - 1 : header.misc.size();
+/* 	for (size_t i = 0; i < endOfMisc ; i++)
 	{
 		if (header.misc[i].empty())
 		{
@@ -153,13 +183,11 @@ void	rewriteHeader(string headerName, Header& header, size_t indent)
 		write << header.others[i].print(indent) << endl;
 	if (header.others.size())
 		write << endl;
-	for (size_t i = 0; i < header.enums.size() ; i++)
-		write << header.enums[i].print(indent) << endl;
 	for (size_t i = 0; i < header.structs.size() ; i++)
 		write << header.structs[i].print(indent) << endl;
 	for (auto it = header.prototypes.begin(); it != header.prototypes.end() ; it++)
 		write << it->second.print(indent) << endl;
-	write << "\n#endif\n";
+	write << "\n#endif\n"; */
 }
 
 void	readFile(string name, unordered_map<string, Function>& all, size_t& indent)
@@ -194,6 +222,7 @@ bool	isPrototype(ifstream& file, string buf, Function& funct, size_t& indent)
 	string funct_args = res.str(3);
 	if (funct_args.size() <= 3)
 		return (false);
+	funct.raw = buf;
 	if (funct.returnType.size() / 4 > indent)
 		indent = funct.returnType.size() / 4;
 	size_t	open_count = count(buf.begin(), buf.end(), '(');
@@ -218,8 +247,9 @@ bool	isPrototype(ifstream& file, string buf, Function& funct, size_t& indent)
 
 bool	isOther(string buf, Other& newOther, size_t& indent)
 {
-	if (buf.size() <= 4 || buf[0] == '\t' || buf[0] == '}' || buf[0] == '{' || buf[0] == '*' || buf[buf.size() - 1] != ';' || !count(buf.begin(), buf.end(), '\t') || count(buf.begin(), buf.end(), '('))
+	if (buf.size() <= 4 || buf[0] == '\t' || buf[0] == '}' || buf[0] == '{' || buf[0] == '*' || buf[buf.size() - 1] != ';' || !count(buf.begin(), buf.end(), '\t'))
 		return (false);
+	newOther.raw = buf;
 	size_t	idx = 0;
 	for (; idx < buf.size() && buf[idx] != '\t'; idx++)
 		newOther.type += buf[idx];
@@ -231,47 +261,34 @@ bool	isOther(string buf, Other& newOther, size_t& indent)
 	return (true);
 }
 
-bool	isEnum(ifstream& file, string buf, Enum& newEnum, size_t& indent)
+bool	isObject(ifstream& file, string buf, Object& newObject, size_t& indent)
 {
-	if (buf.size() <= 7 || buf[0] == '*' || (buf.compare(0, 4, "enum") && buf.compare(0, 12, "typedef enum") && buf.compare(0, 12, "typedef\tenum")) || buf[buf.size() - 1] == ';')
-		return (false);
-	size_t	lastTab = buf.rfind('\t');
-	if (lastTab == string::npos)
-		return (false);
-	newEnum.name = buf.substr(lastTab + 1, (buf.size() - lastTab - 1));
-	if (3 > indent && (!buf.compare(0, 12, "typedef enum") || !buf.compare(0, 12, "typedef\tenum")))
-		indent = 3;
-	getline(file, buf);
-	while (getline(file, buf))
+	string	types[3] = {
+	"union",
+	"struct",
+	"enum"
+	};
+	int type = -1;
+	for (int i = 0; type == -1 && i < 3; i++)
 	{
-		size_t	closeBracket = buf.find('}');
-		if (closeBracket != string::npos)
-		{
-			lastTab = buf.rfind('\t');
-			if (lastTab != string::npos)
-				newEnum.tdef = buf.substr(lastTab + 1, buf.size() - lastTab - 1);
-		}
-		else
-		{
-			size_t idx = 0;
-			for (; idx < buf.size() && buf[idx] == '\t';idx++) {}
-			newEnum.elements.push_back(buf.substr(idx, buf.size() - idx));
-		}
-		if (file.eof() || closeBracket != string::npos)
-			break ;
+		if (i == 0 && (!buf.compare(0, 5, "union") || !buf.compare(0, 13, "typedef union") || !buf.compare(0, 13, "typedef\tunion")))
+			type = i;
+		if (i == 1 && (!buf.compare(0, 6, "struct") || !buf.compare(0, 14, "typedef struct") || !buf.compare(0, 14, "typedef\tstruct")))
+			type = i;
+		if (i == 2 && (!buf.compare(0, 4, "enum") || !buf.compare(0, 12, "typedef enum") || !buf.compare(0, 12, "typedef\tenum")))
+			type = i;
 	}
-	return (true);
-}
-
-bool	isStruct(ifstream& file, string buf, Struct& newStruct, size_t& indent)
-{
-	if (buf.size() <= 7 || buf[0] == '*' || (buf.compare(0, 6, "struct") && buf.compare(0, 14, "typedef struct") && buf.compare(0, 14, "typedef\tstruct")) || buf[buf.size() - 1] == ';')
+	if (buf.size() <= 7 || buf[0] == '*' || 
+		type == -1 || 
+		buf[buf.size() - 1] == ';')
 		return (false);
 	size_t	lastTab = buf.rfind('\t');
 	if (lastTab == string::npos)
 		return (false);
-	newStruct.name = buf.substr(lastTab + 1, (buf.size() - lastTab - 1));
-	if (3 > indent && (!buf.compare(0, 14, "typedef struct") || !buf.compare(0, 14, "typedef\tstruct")))
+	newObject.raw = buf;
+	newObject.type = types[type];
+	newObject.name = buf.substr(lastTab + 1, (buf.size() - lastTab - 1));
+	if (3 > indent && (!buf.compare(0, 7, "typedef")))
 		indent = 3;
 	getline(file, buf);
 	while (getline(file, buf))
@@ -281,7 +298,7 @@ bool	isStruct(ifstream& file, string buf, Struct& newStruct, size_t& indent)
 		{
 			lastTab = buf.rfind('\t');
 			if (lastTab != string::npos)
-				newStruct.tdef = buf.substr(lastTab + 1, buf.size() - lastTab - 1);
+				newObject.tdef = buf.substr(lastTab + 1, buf.size() - lastTab - 1);
 		}
 		else
 		{
@@ -296,10 +313,80 @@ bool	isStruct(ifstream& file, string buf, Struct& newStruct, size_t& indent)
 			for (; idx < buf.size() && buf[idx] == '\t';idx++) {}
 			for (; idx < buf.size() && buf[idx] != '\t';idx++)
 				name += buf[idx];
-			newStruct.elements.push_back(pair<string, string>(type, name));
+			newObject.elements.push_back(pair<string, string>(type, name));
 		}
 		if (file.eof() || closeBracket != string::npos)
 			break ;
+	}
+	return (true);
+}
+
+bool	isHead(ifstream& file, string buf, Head& newHead)
+{
+	if (buf.compare("/* ************************************************************************** */"))
+		return (false);
+	newHead.raw = buf;
+	newHead.header.push_back(buf);
+	while (getline(file, buf))
+	{
+		if (buf.compare(0, 2, "/*") || file.eof())
+			break ;
+		newHead.header.push_back(buf);
+	}
+	return (true);
+}
+
+bool	isDefine(string buf, Define& newDefine)
+{
+	if (buf.size() <= 5 || buf[0] != '#')
+		return (false);
+	size_t	i = 1;
+	for (; buf[i] == ' ' && i < buf.size(); i++) {}
+	if (i + 5 > buf.size() || (buf.compare(i, 6, "define") && buf.compare(i, 6, "ifndef") && buf.compare(i, 5, "endif")))
+		return (false);
+	newDefine.raw = buf;
+	newDefine.line = buf;
+	return (true);
+}
+
+bool	isInclude(string buf, Include& newInclude)
+{
+	if (buf.size() <= 6 || buf[0] != '#')
+		return (false);
+	size_t i = 1;
+	for (; buf[i] == ' ' && i < buf.size(); i++) {}
+//	cerr << "INCLUDE: " << &buf[i] << endl;
+	if (i + 7 > buf.size() || buf.compare(i, 7, "include"))
+		return (false);
+	newInclude.raw = buf;
+	newInclude.line = buf;
+	return (true);
+}
+
+bool	isComment(ifstream& file, string& buf, Comment& newComment)
+{
+	if (buf.size() < 2 || buf[0] != '/')
+		return (false);
+	newComment.raw = buf;
+	size_t i = 2;
+	for (; i < buf.size() && (buf[i] == '\t' || buf[i] == ' '); i++) {}
+	string content;
+	for (; i < buf.size(); i++)
+		content += buf[i];
+	if (content.size())
+		newComment.lines.push_back(content);
+	while (getline(file, buf))
+	{
+		if (file.eof() || buf.size() < 2 || (buf[0] == '*' && buf[1] == '/'))
+			break ;
+		if (!(buf[0] == '*' && buf[1] == '*') && !(buf[0] == '/' && buf[1] == '/'))
+			break ;
+		content.clear();
+		i = 2;
+		for (; i < buf.size() && (buf[i] == '\t' || buf[i] == ' '); i++) {}
+		for (; i < buf.size(); i++)
+			content += buf[i];
+		newComment.lines.push_back(content);
 	}
 	return (true);
 }
@@ -308,25 +395,41 @@ void	readHeader(string headerName, Header& header, size_t& indent)
 {
 	string buf;
 	ifstream	file(headerName.c_str());
+	size_t	lineNumber = 0;
 
 	while (getline(file, buf))
 	{
-		Struct newStruct;
-		Enum newEnum;
+		Object newObject;
 		Function newFunct;
 		Other newOther;
-		if (isPrototype(file, buf, newFunct, indent))
-			header.prototypes[newFunct.name] = newFunct;
+		Misc newMisc;
+		Comment newComment;
+		Include newInclude;
+		Head newHead;
+		Define newDefine;
+		if (!lineNumber && isHead(file, buf, newHead))
+			header.data.push_back(new Head(newHead));
+		else if (isPrototype(file, buf, newFunct, indent))
+			header.data.push_back(new Function(newFunct));
 		else if (isOther(buf, newOther, indent))
-			header.others.push_back(newOther);
-		else if (isStruct(file, buf, newStruct, indent))
-			header.structs.push_back(newStruct);
-		else if (isEnum(file, buf, newEnum, indent))
-			header.enums.push_back(newEnum);
-		else
-			header.misc.push_back(buf);
+			header.data.push_back(new Other(newOther));
+		else if (isObject(file, buf, newObject, indent))
+			header.data.push_back(new Object(newObject));
+		else if (isDefine(buf, newDefine))
+			header.data.push_back(new Define(newDefine));
+		else if (isInclude(buf, newInclude))
+			header.data.push_back(new Include(newInclude));
+		else if (isComment(file, buf, newComment))
+			header.data.push_back(new Comment(newComment));
+		else if (buf.size())
+		{
+			newMisc.line = buf;
+			newMisc.raw = buf;
+			header.data.push_back(new Misc(newMisc));
+		}
 		if (file.eof())
 			break ;
+		lineNumber++;
 	}
 }
 

@@ -1,40 +1,43 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   Other.hpp                                          :+:    :+:            */
+/*   Head.hpp                                           :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
-/*   Created: 2020/09/26 10:59:54 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/10/02 13:39:30 by tbruinem      ########   odam.nl         */
+/*   Created: 2020/10/02 14:37:19 by tbruinem      #+#    #+#                 */
+/*   Updated: 2020/10/02 16:44:08 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef OTHER_HPP
-# define OTHER_HPP
+#ifndef HEAD_HPP
+# define HEAD_HPP
 
-#include <iostream>
-#include <string>
-#include <HeaderData.hpp>
+# include <HeaderData.hpp>
+# include <string>
+# include <vector>
 
-class	Other : public HeaderData
+class	Head : public HeaderData
 {
 	public:
-		Other() : HeaderData(OTHER) {}
-		Other(const Other& orig) : HeaderData(OTHER)
+		std::vector<std::string>	header;
+		Head() : HeaderData(HEAD) {}
+		Head(const Head& orig) : HeaderData(HEAD)
 		{
-			this->type = orig.type;
-			this->name = orig.name;
+			this->header = orig.header;
 			this->raw = orig.raw;
 		}
-		std::string	type;
-		std::string	name;
 		std::string print(size_t indent) const
 		{
 			std::string out;
 
-			size_t	tabAmount = ((int)(indent - (type.size() / 4)) < 0) ? 0 : indent - (type.size() / 4);
-			out += this->type + std::string(tabAmount, '\t') + this->name;
+			(void)indent;
+			for (size_t i = 0; i < this->header.size(); i++)
+			{
+				out += this->header[i];
+				if (i + 1 < this->header.size())
+					out += "\n";
+			}
 			return (out);
 		}
 };
