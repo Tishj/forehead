@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/25 15:58:19 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/10/02 17:23:56 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/10/05 13:28:08 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,8 @@ class	Object : public HeaderData
 			{
 				out += std::string(indent, '\t') + this->tdef;
 			}
+			else
+				out += ";";
 			return (out);
 		}
 };
