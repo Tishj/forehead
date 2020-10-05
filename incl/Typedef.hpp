@@ -1,40 +1,39 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   Other.hpp                                          :+:    :+:            */
+/*   Typedef.hpp                                        :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
-/*   Created: 2020/09/26 10:59:54 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/10/02 13:39:30 by tbruinem      ########   odam.nl         */
+/*   Created: 2020/10/01 16:24:24 by tbruinem      #+#    #+#                 */
+/*   Updated: 2020/10/02 13:39:41 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef OTHER_HPP
-# define OTHER_HPP
+#ifndef TYPEDEF_HPP
+# define TYPEDEF_HPP
 
-#include <iostream>
 #include <string>
 #include <HeaderData.hpp>
 
-class	Other : public HeaderData
+class Typedef : public HeaderData
 {
 	public:
-		Other() : HeaderData(OTHER) {}
-		Other(const Other& orig) : HeaderData(OTHER)
+		Typedef() : HeaderData(OTHER) {}
+		Typedef(const Typedef& orig) : HeaderData(OTHER)
 		{
-			this->type = orig.type;
-			this->name = orig.name;
+			this->data = orig.data;
 			this->raw = orig.raw;
 		}
-		std::string	type;
-		std::string	name;
+		std::pair<std::string, std::string> data;
 		std::string print(size_t indent) const
 		{
 			std::string out;
 
-			size_t	tabAmount = ((int)(indent - (type.size() / 4)) < 0) ? 0 : indent - (type.size() / 4);
-			out += this->type + std::string(tabAmount, '\t') + this->name;
+			out += this->data.first();
+			size_t	tabAmount = ((int)(indent - (this->data.first().size() / 4)) < 0) ? 0 : indent - (this->data.first().size() / 4);
+			out += std::string(tabAmount, '\t');
+			out += this->data.second();
 			return (out);
 		}
 };

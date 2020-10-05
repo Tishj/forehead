@@ -1,53 +1,65 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   Struct.hpp                                         :+:    :+:            */
+/*   Object.hpp                                         :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/25 15:58:19 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/26 19:16:48 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/10/02 17:23:56 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef STRUCT_HPP
-# define STRUCT_HPP
+#ifndef OBJECT_HPP
+# define OBJECT_HPP
 
 #include <string>
 #include <vector>
+#include <HeaderData.hpp>
 
-class	Struct
+class	Object : public HeaderData
 {
 	public:
-		Struct() {} ;
+		Object() : HeaderData(OBJECT) {}
+		Object(const Object& orig) : HeaderData(OBJECT)
+		{
+			this->elements = orig.elements;
+			this->name = orig.name;
+			this->type = orig.type;
+			this->tdef = orig.tdef;
+			this->raw = orig.raw;
+		}
 		std::string	name;
+		std::string type;
 		std::string	tdef;
-		std::vector<std::pair<std::string, std::string> >	elements;
-		Struct(std::string name, std::string tdef, std::vector<std::pair<std::string, std::string> > elements) : name(name), tdef(tdef), elements(elements) {} ;
-		~Struct() {} ;
-		std::string print(size_t indent)
+		std::vector<std::pair<std::string, std::string>>	elements;
+		Object(std::string name, std::string type, std::string tdef, std::vector<std::pair<std::string, std::string> > elements) : HeaderData(OBJECT), name(name), type(type), tdef(tdef), elements(elements) {} ;
+		~Object() {} ;
+		std::string print(size_t indent) const
 		{
 			std::string out;
 			if (this->tdef.size())
 				out += "typedef ";
-			out += "struct";
+			out += this->type;
 			size_t	tabAmount = ((int)(indent - (out.size() / 4)) < 0) ? 0 : indent - (out.size() / 4);
 			out += std::string(tabAmount, '\t');
 			out += this->name + "\n{\n";
 			for (size_t j = 0; j < this->elements.size() ; j++)
 			{
 				out += "\t" + this->elements[j].first;
-				tabAmount = ((int)(indent - 1 - (this->elements[j].first.size() / 4)) < 0) ? 0 : indent - 1 - (this->elements[j].first.size() / 4);
-				out += std::string(indent - 1 - (this->elements[j].first.size() / 4), '\t');
-				out += this->elements[j].second + "\n";
+				if (type.compare("enum"))
+				{
+					tabAmount = ((int)(indent - 1 - (this->elements[j].first.size() / 4)) < 0) ? 0 : indent - 1 - (this->elements[j].first.size() / 4);
+					out += std::string(indent - 1 - (this->elements[j].first.size() / 4), '\t');
+					out += this->elements[j].second;
+				}
+				out += "\n";
 			}
 			out += "}";
 			if (this->tdef.size())
 			{
 				out += std::string(indent, '\t') + this->tdef;
 			}
-			out += "\n";
-
 			return (out);
 		}
 };

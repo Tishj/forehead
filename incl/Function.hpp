@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 15:46:52 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/09/26 19:17:33 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/10/02 13:40:15 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,9 @@
 #include <string>
 #include <vector>
 #include <exception>
+#include <HeaderData.hpp>
 
-class	Function
+class	Function : public HeaderData
 {
 	public:
 		Function();
@@ -28,7 +29,7 @@ class	Function
 		std::string	returnType;
 		std::string	name;
 		std::vector<std::string>	args;
-		std::string	print(size_t indent)
+		std::string	print(size_t indent) const
 		{
 			std::string out;
 
