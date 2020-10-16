@@ -6,7 +6,7 @@
 /*   By: tbruinem <tbruinem@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/23 21:53:16 by tbruinem      #+#    #+#                 */
-/*   Updated: 2020/10/02 18:44:56 by tbruinem      ########   odam.nl         */
+/*   Updated: 2020/10/16 09:58:40 by tbruinem      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -367,20 +367,20 @@ bool	isComment(ifstream& file, string& buf, Comment& newComment)
 
 void	readHeader(string headerName, Header& header, size_t& indent)
 {
-	string buf;
+	string		buf;
 	ifstream	file(headerName.c_str());
-	size_t	lineNumber = 0;
+	size_t		lineNumber = 0;
 
 	while (getline(file, buf))
 	{
-		Object newObject;
-		Function newFunct;
-		Other newOther;
-		Misc newMisc;
-		Comment newComment;
-		Include newInclude;
-		Head newHead;
-		Define newDefine;
+		Object 		newObject;
+		Function 	newFunct;
+		Other 		newOther;
+		Misc 		newMisc;
+		Comment 	newComment;
+		Include 	newInclude;
+		Head 		newHead;
+		Define 		newDefine;
 		if (!lineNumber && isHead(file, buf, newHead))
 			header.data.push_back(new Head(newHead));
 		else if (isPrototype(file, buf, newFunct, indent))
@@ -420,9 +420,9 @@ string	createGuard(string headerName)
 			guard += toupper(headerName[i]);
 		else
 		{
-			if (i && islower(headerName[i - 1]))
+			if (i && islower(headerName[i - 1]) && !isdigit(headerName[i]))
 				guard += "_";
-			if (isalpha(headerName[i]))
+			if (isalpha(headerName[i]) || isdigit(headerName[i]))
 				guard += headerName[i];
 		}
 	}
@@ -438,8 +438,8 @@ void	createHeader(string headerName, Header& headerData, size_t indent)
 		headerName = headerName.substr(path_separator + 1, headerName.size());
 	string guard = createGuard(headerName);
 	header << "#ifndef " << guard << "\n# define " << guard << "\n\n";
-	for (auto it = headerData.prototypes.begin(); it != headerData.prototypes.end() ; it++)
-		header << it->second.print(indent) << endl;
+	for (size_t i = 0; i < headerData.data.size(); i++)
+		header << headerData.data[i]->print(indent) << endl;
 	header << "\n#endif\n";
 }
 
@@ -478,9 +478,18 @@ int	main(int argc, char **argv)
 //			cerr << "FUNCTION:" << it->second.name << "was missing." << endl;
 		}
 	}
-	int EndOfPrototypes = headerData.data.size() - 1;
-	for (; EndOfPrototypes >= 0 && headerData.data[EndOfPrototypes]->getType() != PROTOTYPE ; EndOfPrototypes--) {}
-	headerData.data.insert(headerData.data.begin() + EndOfPrototypes + 1, missingPrototypes.begin(), missingPrototypes.end());
+	int EndOfPrototypes = 0;
+	if (headerData.data.size())
+	{
+		EndOfPrototypes = headerData.data.size() - 1;
+		for (; EndOfPrototypes >= 0 && headerData.data[EndOfPrototypes]->getType() != PROTOTYPE ; EndOfPrototypes--) {}
+		if (EndOfPrototypes <= 0)
+			EndOfPrototypes = (headerData.data.size() >= 2) ? headerData.data.size() - 2 : 0;
+	}
+	if (headerData.data.size() >= 2)
+		headerData.data.insert(headerData.data.begin() + EndOfPrototypes + 1, missingPrototypes.begin(), missingPrototypes.end());
+	else
+		headerData.data = missingPrototypes;
 	indent++;
 //	if (newPrototypes)
 //	{
